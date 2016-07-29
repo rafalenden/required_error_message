@@ -1,0 +1,102 @@
+<?php
+
+/**
+ * Implements hook_form_alter().
+ */
+function required_error_message_form_alter(&$form, $form_state, $form_id) {
+  required_error_message_attach_validation($form);
+}
+
+/**
+ * Clears an error against one form element.
+ *
+ * @param string $name
+ *   The name of the form element.
+ */
+function required_error_message_unset_form_error($name) {
+  $errors = &drupal_static('form_set_error', array());
+  $removed_messages = array();
+  if (isset($errors[$name])) {
+    $removed_messages[] = $errors[$name];
+    unset($errors[$name]);
+  }
+  $_SESSION['messages']['error'] = array_diff($_SESSION['messages']['error'], $removed_messages);
+}
+
+/**
+ * Validates required fields for entity form.
+ */
+function required_error_message_validate_required_form_element(&$element, &$form_state, $form) {
+  // Ignore hidden elements.
+  if (isset($element['#access']) && !$element['#access']) {
+    return;
+  }
+
+  // Ignore elements that don't have check_empty flag on.
+  if (empty($element['#check_empty'])) {
+    return;
+  }
+
+  // Ignore elements that are not required.
+  if (empty($element['#required'])) {
+    return;
+  }
+
+  // A simple call to empty() will not cut it here as some fields, like
+  // checkboxes, can return a valid value of '0'. Instead, check the
+  // length if it's a string, and the item count if it's an array.
+  // An unchecked checkbox has a #value of integer 0, different than string
+  // '0', which could be a valid value.
+  $is_empty_multiple = (!count($element['#value']));
+  $is_empty_string = (is_string($element['#value']) && drupal_strlen(trim($element['#value'])) == 0);
+  $is_empty_value = ($element['#value'] === 0);
+  if ($is_empty_multiple || $is_empty_string || $is_empty_value) {
+    // Unset any errors set on this field
+    // by core invocation of _field_validate.
+    required_error_message_form_unset_error(implode('][', $element['#parents']));
+
+    // !unique_tag is used to cater for a problem in IFE module.
+    // For error message that are the same,
+    // IFE is dropping some of them while attaching to the in-line field.
+    // Making the messages unique (through an HTML comment), forces IFE
+    // to behave correctly.
+    form_error($element, sprintf('%s %s', '<!-- ' . $element['#title'] . ' -->', $element['#required_error_message']));
+  }
+
+  $element['#check_empty'] = FALSE;
+}
+
+/**
+ * Recursively attaches a validation handler.
+ *
+ * @param array $element
+ *   Form element to attach a validation hanlder to.
+ */
+function required_error_message_attach_validation(&$element) {
+  if (!empty($element['#required_error_message']) && !empty($element['#required'])) {
+    $element['#element_validate'][] = 'required_error_message_validate_required_form_element';
+    $element['#check_empty'] = TRUE;
+  }
+
+  $children = element_children($element);
+  foreach ($children as $child) {
+    $child_element = &$element[$child];
+    required_error_message_attach_validation($child_element);
+  }
+}
+
+/**
+ * Clears an error against one form element.
+ *
+ * @param string $name
+ *   The name of the form element.
+ */
+function required_error_message_form_unset_error($name) {
+  $errors = &drupal_static('form_set_error', array());
+  $removed_messages = array();
+  if (isset($errors[$name])) {
+    $removed_messages[] = $errors[$name];
+    unset($errors[$name]);
+  }
+  $_SESSION['messages']['error'] = array_diff($_SESSION['messages']['error'], $removed_messages);
+}
