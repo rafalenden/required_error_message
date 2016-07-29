@@ -60,7 +60,7 @@ function required_error_message_validate_required_form_element(&$element, &$form
     // IFE is dropping some of them while attaching to the in-line field.
     // Making the messages unique (through an HTML comment), forces IFE
     // to behave correctly.
-    form_error($element, sprintf('%s %s', '<!-- ' . $element['#title'] . ' -->', $element['#required_error_message']));
+    form_error($element, sprintf('%s %s', '<!-- ' . $element['#title'] . ' -->', $element['#required_error']));
   }
 
   $element['#check_empty'] = FALSE;
@@ -73,7 +73,7 @@ function required_error_message_validate_required_form_element(&$element, &$form
  *   Form element to attach a validation hanlder to.
  */
 function required_error_message_attach_validation(&$element) {
-  if (!empty($element['#required_error_message']) && !empty($element['#required'])) {
+  if (!empty($element['#required_error']) && !empty($element['#required'])) {
     $element['#element_validate'][] = 'required_error_message_validate_required_form_element';
     $element['#check_empty'] = TRUE;
   }
