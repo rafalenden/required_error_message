@@ -78,10 +78,11 @@ function required_error_message_attach_validation(&$element) {
     $element['#check_empty'] = TRUE;
   }
 
-  $children = element_children($element);
-  foreach ($children as $child) {
-    $child_element = &$element[$child];
-    required_error_message_attach_validation($child_element);
+  if ($element && ($children = element_children($element))) {
+    foreach ($children as $child) {
+      $child_element = &$element[$child];
+      required_error_message_attach_validation($child_element);
+    }
   }
 }
 
