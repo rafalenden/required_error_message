@@ -1,10 +1,15 @@
 <?php
 
 /**
- * Implements hook_form_alter().
+ * Implements hook_element_info_alter().
  */
-function required_error_message_form_alter(&$form, $form_state, $form_id) {
-  required_error_message_attach_validation($form);
+function required_error_message_element_info_alter(&$type) {
+  foreach ($type as &$element_type) {
+    if (!empty($element_type['#input'])) {
+      $element_type['#element_validate'][] = 'required_error_message_validate_required_form_element';
+      $element_type['#check_empty'] = TRUE;
+    }
+  }
 }
 
 /**
@@ -33,12 +38,7 @@ function required_error_message_validate_required_form_element(&$element, &$form
   }
 
   // Ignore elements that don't have check_empty flag on.
-  if (empty($element['#check_empty'])) {
-    return;
-  }
-
-  // Ignore elements that are not required.
-  if (empty($element['#required'])) {
+  if (empty($element['#check_empty']) || empty($element['#required_error']) || empty($element['#required'])) {
     return;
   }
 
@@ -64,26 +64,6 @@ function required_error_message_validate_required_form_element(&$element, &$form
   }
 
   $element['#check_empty'] = FALSE;
-}
-
-/**
- * Recursively attaches a validation handler.
- *
- * @param array $element
- *   Form element to attach a validation hanlder to.
- */
-function required_error_message_attach_validation(&$element) {
-  if (!empty($element['#required_error']) && !empty($element['#required'])) {
-    $element['#element_validate'][] = 'required_error_message_validate_required_form_element';
-    $element['#check_empty'] = TRUE;
-  }
-
-  if ($element && ($children = element_children($element))) {
-    foreach ($children as $child) {
-      $child_element = &$element[$child];
-      required_error_message_attach_validation($child_element);
-    }
-  }
 }
 
 /**
