@@ -2,3 +2,4 @@
 *.install linguist-language=PHP
 *.profile linguist-language=PHP
 *.info linguist-language=INI
+*.make linguist-language=INI
